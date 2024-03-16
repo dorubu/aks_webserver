@@ -105,8 +105,7 @@ For the deployment a Terraform Service Principal must be created with the follow
 
     ```bash
     echo "$(terraform output kube_config)" > ../azurek8s
-    sed -i '1d' ../azurek8s # remove first line
-    sed -i '$ d' ../azurek8s # remove last line
+    sed -i '1d' ../azurek8s && sed -i '$ d' ../azurek8s # remove first line and last line
     export KUBECONFIG="$workspaceFolderPath/src/infrastructure-deployment/azurek8s"
     ```
 
