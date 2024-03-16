@@ -42,7 +42,7 @@ For the deployment a Terraform Service Principal must be created with the follow
 
     ```bash
     workspaceFolderPath="<replace-this>"
-    cd $workspaceFolderPath/src
+    cd $workspaceFolderPath/src/infrastructure-deployment
     source env.cfg
 
     az login --use-device-code # should be replaced with technical user / (terraform) service principal
