@@ -1,0 +1,34 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crypto-wrapper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crypto-wrapper
+  template:
+    metadata:
+      labels:
+        app: crypto-wrapper
+    spec:
+      containers:
+      - name: crypto-wrapper
+        image: eusqacrk8sassign.azurecr.io/samples/crypto-wrapper
+        ports:
+        - containerPort: 5000
+---
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: crypto-wrapper
+spec:
+  type: ClusterIP
+  selector:
+    app: crypto-wrapper
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000

@@ -1,0 +1,35 @@
+# simple-server-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simple-server
+  template:
+    metadata:
+      labels:
+        app: simple-server
+    spec:
+      containers:
+      - name: simple-server
+        image: eusqacrk8sassign.azurecr.io/samples/simple-server
+        ports:
+        - containerPort: 80
+---
+# simple-server-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-server
+spec:
+  type: ClusterIP
+  selector:
+    app: simple-server
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+---
