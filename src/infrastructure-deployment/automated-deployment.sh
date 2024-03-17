@@ -7,8 +7,7 @@
 
 # Setup environment
 workspaceFolderPath="<replace-this>"
-cd $workspaceFolderPath/src/infrastructure-deployment
-source env.cfg
+source $workspaceFolderPath/src/infrastructure-deployment/env.cfg
 echo "Environment variables have been setup."
 
 
@@ -23,8 +22,8 @@ echo "Subscription: $SUBSCRIPTION."
 cd $workspaceFolderPath/src/infrastructure-deployment/acr
 
 terraform init
-terraform plan
-terraform apply -auto-approve
+terraform plan -out acr.tfplan
+terraform apply acr.tfplan
 
 echo "ACR deployment was successful."
 echo "ACR: $ACR_NAME"
@@ -61,7 +60,7 @@ echo "Service B name: $SERVICE_B."
 cd $workspaceFolderPath/src/infrastructure-deployment/aks
 
 terraform init
-terraform plan
+terraform plan 
 terraform apply -auto-approve
 
 # Setup kubeconfig
@@ -80,19 +79,21 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 echo "NGINX Ingress Controller deployment was successful."
 
 
+# Deploy Ingress to AKS.
+kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/aks-network-setup/ingress.deployment.yaml
+echo "Ingress deployment to AKS was successful."
+
+
+# Deploy Network Policies to AKS.
+kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/aks-network-setup/network-policies.deployment.yaml
+echo "network policies deployment to AKS was successful."
+
+
 # Deploy Service A to AKS
-cd $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_A
-kubectl apply -f ./deployment.yaml
+kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_A/deployment.yaml
 echo "Service A deployment to AKS was successful."
 
 
 # Deploy Service B to AKS.
-cd $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_B
-kubectl apply -f ./deployment.yaml
+kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_B/deployment.yaml
 echo "Service B deployment to AKS was successful."
-
-
-# Deploy Ingress to AKS.
-cd $workspaceFolderPath/src/infrastructure-deployment/service-deployments/ingress-rules
-kubectl apply -f ./deployment.yaml
-echo "Ingress deployment to AKS was successful."

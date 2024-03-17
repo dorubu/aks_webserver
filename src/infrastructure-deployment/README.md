@@ -42,8 +42,7 @@ For the deployment a Terraform Service Principal must be created with the follow
 
     ```bash
     workspaceFolderPath="<replace-this>"
-    cd $workspaceFolderPath/src/infrastructure-deployment
-    source env.cfg
+    source $workspaceFolderPath/src/infrastructure-deployment/env.cfg
 
     az login --use-device-code # should be replaced with technical user / (terraform) service principal
     az account set az account set --subscription $SUBSCRIPTION
@@ -56,8 +55,8 @@ For the deployment a Terraform Service Principal must be created with the follow
     ```bash
     cd $workspaceFolderPath/src/infrastructure-deployment/acr
     terraform init
-    terraform plan
-    terraform apply -auto-approve
+    terraform plan -out acr.tfplan
+    terraform apply acr.tfplan
     ```
 
 4. Login to ACR.
@@ -97,8 +96,8 @@ For the deployment a Terraform Service Principal must be created with the follow
     ```bash
     cd $workspaceFolderPath/src/infrastructure-deployment/aks
     terraform init
-    terraform plan
-    terraform apply -auto-approve
+    terraform plan -out main.tfplan
+    terraform apply main.tfplan
     ```
 
 8. Setup AKS Cluster acces through `kubeconfig`.
@@ -115,23 +114,30 @@ For the deployment a Terraform Service Principal must be created with the follow
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.3.0/deploy/static/provider/cloud/deploy.yaml
     ```
 
-10. Deploy Service A (crypto-wrapper) to AKS.
+10. Deploy Ingress to AKS.
 
     ```bash
-    cd $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_A
-    kubectl apply -f ./deployment.yaml
+    kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/aks-network-setup/ingress.deployment.yaml
     ```
 
-11. Deploy Service B (simple-server) to AKS.
+11. Deploy Network Policies to AKS.
+
+    - Route traffic to Service A and Service B through an NGINX Ingress Controller
+    - Deny all Ingress/Egress traffic to pods
+    - Allow traffic from Service A to internet
 
     ```bash
-    cd $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_B
-    kubectl apply -f ./deployment.yaml
+    kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/aks-network-setup/network-policies.deployment.yaml
     ```
 
-12. Deploy Ingress to route traffic to Service A and Service B.
+12. Deploy Service A (crypto-wrapper) to AKS.
 
     ```bash
-    cd $workspaceFolderPath/src/infrastructure-deployment/service-deployments/ingress-rules
-    kubectl apply -f ./deployment.yaml
+    kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_A/deployment.yaml
+    ```
+
+13. Deploy Service B (simple-server) to AKS.
+
+    ```bash
+    kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_B/deployment.yaml
     ```

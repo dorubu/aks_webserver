@@ -14,10 +14,10 @@ spec:
         app: simple-server
     spec:
       containers:
-      - name: simple-server
-        image: eusqacrk8sassign.azurecr.io/samples/simple-server
-        ports:
-        - containerPort: 80
+        - name: simple-server
+          image: eusqacrk8sassign.azurecr.io/samples/simple-server
+          ports:
+            - containerPort: 80
 ---
 # service.yaml
 apiVersion: v1
@@ -29,6 +29,6 @@ spec:
   selector:
     app: simple-server
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8080
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
