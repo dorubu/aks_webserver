@@ -2,6 +2,13 @@
 
 This file contains the instructions for manual deployment of the full infrastructure using shell scripts.
 
+For an (almost) automated approach, please refer to:
+
+- [Shell Automation](./automated-deployment.sh)
+- [Github Actions Pipeline](../../.github/workflows/K8S_assignment_deployment.yml)
+
+__Attention__ These automations are not yet fully functional.
+
 ## Requirements
 
 The host where the instructions are running requires the following tools installed:
