@@ -65,8 +65,7 @@ terraform apply -auto-approve
 
 # Setup kubeconfig
 echo "$(terraform output kube_config)" > ../azurek8s
-sed -i '1d' ../azurek8s # remove first line
-sed -i '$ d' ../azurek8s # remove last line
+sed -i '1d' ../azurek8s && sed -i '$ d' ../azurek8s # remove first line and last line
 export KUBECONFIG="$workspaceFolderPath/src/infrastructure-deployment/azurek8s"
 
 echo "AKS deployment was successful."
