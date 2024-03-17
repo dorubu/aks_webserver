@@ -1,0 +1,92 @@
+# This file does not contain a working configuration. Please update before running.
+
+name: Kubernetes Assignment Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      Azure_Subsription:
+        required: true
+        type: string
+      Resource_Suffix:
+        required: true
+        type: string
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Set up kubectl
+        uses: azure/k8s-set-context@v1
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v1
+
+      - name: Set up Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Setup environment
+        run: |
+          source ${{ github.workspace }}/src/env.cfg
+          az account set --subscription '${{ github.event.inputs.Azure_Subsription }}'
+
+      - name: Deploy ACR
+        run: |
+          cd ${{ github.workspace }}/src/infrastructure-deployment/acr
+          terraform init
+          terraform plan -out acr.tfplan
+          terraform apply acr.tfplan
+
+      - name: Login to ACR
+        run: az acr login -n $ACR_NAME
+
+      - name: Build, tag, and push image - Service A
+        run: |
+          cd ${{ github.workspace }}/src/apps/$SERVICE_A
+          docker build -t $SERVICE_A -f ${{ github.workspace }}/src/infrastructure-deployment/service_deployments/$SERVICE_A .
+          docker tag $SERVICE_A $ACR_NAME.azurecr.io/samples/$SERVICE_A
+          docker push $ACR_NAME.azurecr.io/samples/$SERVICE_A
+
+      - name: Build, tag, and push image - Service B
+        run: |
+          cd ${{ github.workspace }}/src/apps/$SERVICE_B
+          docker build -t $SERVICE_B -f ${{ github.workspace }}/src/infrastructure-deployment/service_deployments/$SERVICE_B .
+          docker tag $SERVICE_B $ACR_NAME.azurecr.io/samples/$SERVICE_B
+          docker push $ACR_NAME.azurecr.io/samples/$SERVICE_B
+
+      - name: Deploy AKS
+        run: |
+          cd ${{ github.workspace }}/src/infrastructure-deployment/aks
+          terraform init
+          terraform plan -out aks.tfplan
+          terraform apply aks.tfplan
+        env:
+          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Deploy NGINX Ingress Controller
+        run: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.3.0/deploy/static/provider/cloud/deploy.yaml
+
+      - name: Deploy Ingress to AKS
+        run: kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/aks-network-setup/ingress.deployment.yaml
+
+      - name: Deploy Network Policies to AKS
+        run: kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/aks-network-setup/network-policies.deployment.yaml
+
+      - name: Deploy Service A to AKS
+        run: kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_A/deployment.yaml
+
+      - name: Deploy Service B to AKS
+        run: kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_B/deployment.yaml
