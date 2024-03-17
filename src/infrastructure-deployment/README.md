@@ -141,3 +141,40 @@ For the deployment a Terraform Service Principal must be created with the follow
     ```bash
     kubectl apply -f $workspaceFolderPath/src/infrastructure-deployment/service-deployments/$SERVICE_B/deployment.yaml
     ```
+
+## Testing
+
+### Functional requirements
+
+The full deployment must cover the following capabilities:
+
+1. curl service_url/crypto-wrapper/bitcoin_price
+2. curl service_url/crypto-wrapper/bitcoin_average
+3. curl service_url/simple-server
+
+This can be tested using any type of web client (browser, curl, etc.).
+
+### Cluster security
+
+Traffic between Pods and from Service B to the internet must be disabled, which can be verified by running:
+
+```bash
+pod_b_name=$(kubectl get pods --no-headers -o custom-columns=":metadata.name" | grep -m1 ^$SERVICE_B)
+service_a_internal_ip=$(kubectl get service/$SERVICE_A -o jsonpath='{.spec.clusterIP}')
+echo $service_a_internal_ip
+
+kubectl exec -it $pod_a_name -- /bin/bash
+
+# Run inside the pod
+target_ip="<replace with service_a_internal_ip>"
+# try to connect to Service A
+curl target_ip/bitcoin_average # fail
+# try to connect to Internet
+curl google.com # fail
+```
+
+Same thing can be done to check connectivity from Service A to Service B.
+
+- `curl` must be installed on Service A Pod.
+- To connect to Service B one must run: `curl target_ip`.
+- `curl google.com` is successful.
